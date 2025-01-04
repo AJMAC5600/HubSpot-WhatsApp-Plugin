@@ -1,0 +1,11 @@
+{
+  "client_id": "da88f438-a3e5-4e59-ba15-f757c11364ba",
+  "client_secret": "a1977c38-61fb-474c-96a3-dcf3ded6b6e2",
+  "redirect_uri": "http://localhost:3000/oauth/callback",
+  "scopes": [
+    "crm.objects.contacts.read",
+    "crm.objects.contacts.write",
+    "oauth"
+  ],
+  "whatsapp_api_key": "rJTgCiyhOkODrL8FU3BA6v"
+}
