@@ -98,7 +98,7 @@ const refreshAccessToken = async () => {
     });
 
     const { hubspotClientId, hubspotClientSecret, refresh_token, expires_at } =
-      settings[0];
+      settings;
     const currentTime = Date.now();
 
     if (new Date(expires_at).getTime() - currentTime <= 10 * 60 * 1000) {
