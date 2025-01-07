@@ -72,8 +72,8 @@
     </div>
 
     <script>
-      let templates = []; // Store all templates fetched from the backend
-      let selectedTemplate = null;
+      // Store all templates fetched from the backend
+      let templates = [];
 
       // Fetch templates when the channel is selected
       $("#channel").change(function () {
@@ -88,61 +88,8 @@
             if (response.success) {
               templates = response.templates; // Store fetched templates
 
-              // Clear the template dropdown
+              // Clear the template dropdown and update it
               updateTemplateDropdown(templates);
-
-              console.log("Templates updated successfully!");
-            } else {
-              alert("Failed to fetch templates.");
-            }
-          },
-          error: function (error) {
-            console.error("Error fetching templates:", error);
-            alert("Error fetching templates.");
-          },
-        });
-      });
-
-      // Handle template selection
-      $("#template").change(function () {
-        const selectedTemplateName = $(this).val(); // Get the selected template name
-        const selectedChannel = $("#channel").val();
-
-        // Send the selected template name to the backend immediately
-        $.ajax({
-          url: "/templates/fetch", // Backend endpoint to handle the submission
-          method: "POST",
-          data: { template: selectedTemplateName, channel: selectedChannel },
-          success: function (response) {
-            if (response.success) {
-              alert("Template selected: " + selectedTemplateName);
-            } else {
-              alert("Failed to select template.");
-            }
-          },
-          error: function (error) {
-            console.error("Error sending template:", error);
-            alert("Error sending template.");
-          },
-        });
-      });
-      // send template name to the backend
-      $("#channel").change(function () {
-        const selectedChannel = $(this).val(); // Get the selected channel value
-
-        // Make an AJAX request to fetch templates for the selected channel
-        $.ajax({
-          url: "/save-channel", // Backend endpoint to fetch templates
-          method: "POST",
-          data: { channel: selectedChannel },
-          success: function (response) {
-            if (response.success) {
-              templates = response.templates; // Store fetched templates
-
-              // Clear the template dropdown
-              updateTemplateDropdown(templates);
-
-              console.log("Templates updated successfully!");
             } else {
               alert("Failed to fetch templates.");
             }
@@ -183,30 +130,41 @@
       // Fetch the template components after selecting the template
       $("#template").change(function () {
         const selectedTemplateName = $(this).val(); // Get selected template name
-        selectedTemplate = templates.find(
-          (template) => template.name === selectedTemplateName
-        );
+        const selectedChannel = $("#channel").val(); // Get selected channel
 
-        if (selectedTemplate) {
-          generateInputs();
-        }
+        // Send the selected template name to the backend to fetch its components
+        $.ajax({
+          url: "/templates/fetch", // Backend endpoint to handle the submission
+          method: "POST",
+          data: { template: selectedTemplateName, channel: selectedChannel },
+          success: function (response) {
+            if (response.success) {
+              const templateData = response.templateData; // Full template data
+
+              // Dynamically generate the inputs based on the full template data
+              generateInputs(templateData);
+            } else {
+              alert("Failed to fetch template components.");
+            }
+          },
+          error: function (error) {
+            console.error("Error fetching template components:", error);
+            alert("Error fetching template components.");
+          },
+        });
       });
 
-      // Function to generate inputs dynamically based on the selected template
-      function generateInputs() {
-        const headerComponent = selectedTemplate.components.find(
+      // Function to generate inputs dynamically based on the full template data
+      function generateInputs(templateData) {
+        // Clear previous inputs
+        document.getElementById("header-inputs").innerHTML = "";
+        document.getElementById("body-inputs").innerHTML = "";
+        document.getElementById("button-content").innerHTML = "";
+
+        // Generate header inputs
+        const headerComponent = templateData.template.components.find(
           (c) => c.type === "header"
         );
-        const bodyComponent = selectedTemplate.components.find(
-          (c) => c.type === "body"
-        );
-        const buttonComponent = selectedTemplate.components.find(
-          (c) => c.type === "button"
-        );
-
-        // Render inputs for the header
-        const headerInputsContainer = document.getElementById("header-inputs");
-        headerInputsContainer.innerHTML = "";
         if (headerComponent) {
           headerComponent.parameters.forEach((param, index) => {
             const inputLabel = document.createElement("label");
@@ -216,14 +174,15 @@
             inputField.type = "text";
             inputField.placeholder = `Enter text for header (e.g., ${param.text})`;
 
-            headerInputsContainer.appendChild(inputLabel);
-            headerInputsContainer.appendChild(inputField);
+            document.getElementById("header-inputs").appendChild(inputLabel);
+            document.getElementById("header-inputs").appendChild(inputField);
           });
         }
 
-        // Render inputs for the body
-        const bodyInputsContainer = document.getElementById("body-inputs");
-        bodyInputsContainer.innerHTML = "";
+        // Generate body inputs
+        const bodyComponent = templateData.template.components.find(
+          (c) => c.type === "body"
+        );
         if (bodyComponent) {
           bodyComponent.parameters.forEach((param, index) => {
             const inputLabel = document.createElement("label");
@@ -233,15 +192,15 @@
             inputField.type = "text";
             inputField.placeholder = `Enter text for body (e.g., ${param.text})`;
 
-            bodyInputsContainer.appendChild(inputLabel);
-            bodyInputsContainer.appendChild(inputField);
+            document.getElementById("body-inputs").appendChild(inputLabel);
+            document.getElementById("body-inputs").appendChild(inputField);
           });
         }
 
-        // Render button content without input field
-        const buttonContentContainer =
-          document.getElementById("button-content");
-        buttonContentContainer.innerHTML = "";
+        // Generate button content
+        const buttonComponent = templateData.template.components.find(
+          (c) => c.type === "button"
+        );
         if (buttonComponent) {
           buttonComponent.parameters.forEach((param, index) => {
             const buttonText = document.createElement("p");
@@ -249,7 +208,7 @@
               param.text
             }`;
 
-            buttonContentContainer.appendChild(buttonText);
+            document.getElementById("button-content").appendChild(buttonText);
           });
         }
       }
