@@ -102,3 +102,80 @@ button:hover {
   display: flex;
   justify-content: space-between;
 }
+/* new css */
+/* Container for the form */
+/* .container {
+  width: 50%;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+} */
+
+/* Label for the select input */
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  color: #333;
+}
+
+/* Styling the select element */
+select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: #fff;
+  color: #333;
+  box-sizing: border-box;
+}
+
+/* Add some padding to the options for better readability */
+select option {
+  padding: 8px;
+  font-size: 1rem;
+}
+
+/* Option for 'Select All' */
+select option[value="true"] {
+  font-weight: bold;
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+/* Add hover effect for better interaction */
+select:hover {
+  border-color: #888;
+  cursor: pointer;
+}
+
+/* Add focus effect to the select field */
+select:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+/* Styling the overall form */
+form {
+  margin-top: 20px;
+}
+
+/* Add spacing between sections */
+.section {
+  margin-bottom: 20px;
+}
+option:nth-child(even) {
+  background-color: #f4f4f4;
+}
+#contact {
+  height: 50px;
+  width: 100%;
+}
+#contact:hover {
+  height: 150px;
+}
