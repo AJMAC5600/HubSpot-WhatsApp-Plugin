@@ -1,14 +1,16 @@
-const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
 const cron = require("node-cron");
-require("dotenv").config(); // Load environment variables early
+// Load environment variables early
 const session = require("express-session");
+
+require("dotenv").config();
 
 const oauthRoutes = require("./routes/oauthRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const templateRoutes = require("./routes/templateRoutes");
 const { refreshAccessToken } = require("./controllers/oauthController");
+const express = require("express");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -74,6 +76,7 @@ app.use((err, req, res, next) => {
   console.error("Error:", err.stack);
   res.status(500).send("Something went wrong!");
 });
+// reloadEnv();
 
 // Start server
 app.listen(port, () => {

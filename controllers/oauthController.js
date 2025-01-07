@@ -1,5 +1,3 @@
-// const fetch = (...args) =>
-//   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const db = require("../config/database");
 const { updateEnv } = require("../utils/updateEnv");
 
@@ -7,16 +5,38 @@ const { updateEnv } = require("../utils/updateEnv");
 const getHubSpotAccessToken = async (req, res) => {
   const { code } = req.query;
 
-  const url = "https://api.hubapi.com/oauth/v1/token";
-  const params = new URLSearchParams({
-    grant_type: "authorization_code",
-    client_id: process.env.HUBSPOT_CLIENT_ID,
-    client_secret: process.env.HUBSPOT_CLIENT_SECRET,
-    redirect_uri: process.env.HUBSPOT_REDIRECT_URI,
-    code,
-  });
+  // Query to fetch HubSpot client details from the database
+  const query = `SELECT hubspotClientId, hubspotClientSecret FROM settings WHERE id = 1`;
 
   try {
+    const [settings] = await new Promise((resolve, reject) => {
+      db.query(query, (err, results) => {
+        if (err) return reject(err);
+        if (results.length === 0) {
+          console.error("No settings found in the database.");
+          return reject(new Error("Settings not found."));
+        }
+        resolve(results);
+      });
+    });
+
+    // Check if settings are properly returned
+    if (!settings || settings.length === 0) {
+      console.error("Settings are empty.");
+      return res.status(500).send("Settings not found in the database.");
+    }
+
+    const { hubspotClientId, hubspotClientSecret } = settings;
+
+    const url = "https://api.hubapi.com/oauth/v1/token";
+    const params = new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: hubspotClientId,
+      client_secret: hubspotClientSecret,
+      redirect_uri: process.env.HUBSPOT_REDIRECT_URI, // Fetch from .env file
+      code,
+    });
+
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -45,7 +65,7 @@ const getHubSpotAccessToken = async (req, res) => {
           data.access_token,
           data.refresh_token,
           new Date(newExpiryTime).toISOString(),
-          process.env.HUBSPOT_CLIENT_ID,
+          hubspotClientId,
         ],
         (err) => {
           if (err) return reject(err);
@@ -64,25 +84,21 @@ const getHubSpotAccessToken = async (req, res) => {
 
 // Function to refresh the access token if it's about to expire
 const refreshAccessToken = async () => {
-  const query = `
-    SELECT hubspotClientId, hubspotClientSecret, access_token, refresh_token, expires_at 
-    FROM settings 
-    WHERE hubspotClientId = ? LIMIT 1
-  `;
+  // Query to get settings from the database
+  const query = `SELECT hubspotClientId, hubspotClientSecret, access_token, refresh_token, expires_at FROM settings WHERE id = 1`;
 
   try {
-    // Fetch settings from the database
     const [settings] = await new Promise((resolve, reject) => {
-      db.query(query, [process.env.HUBSPOT_CLIENT_ID], (err, results) => {
+      db.query(query, (err, results) => {
         if (err) return reject(err);
         if (results.length === 0)
-          return reject(new Error("No settings found."));
+          return reject(new Error("Settings not found."));
         resolve(results);
       });
     });
 
     const { hubspotClientId, hubspotClientSecret, refresh_token, expires_at } =
-      settings;
+      settings[0];
     const currentTime = Date.now();
 
     if (new Date(expires_at).getTime() - currentTime <= 10 * 60 * 1000) {
@@ -95,8 +111,6 @@ const refreshAccessToken = async () => {
         client_secret: hubspotClientSecret,
         refresh_token,
       });
-
-      console.log("Request Params:", params.toString()); // Log params for debugging
 
       const response = await fetch(url, {
         method: "POST",
