@@ -5,21 +5,18 @@ const db = require("../config/database"); // Your database (if used)
 require("dotenv").config(); // Load environment variables early
 
 // Function to send a WhatsApp message
-const sendWhatsAppMessage = async (to, message) => {
-  const whatsappApiUrl = `${config.whatsapp.apiUrl}/v13.0/messages`;
+const sendWhatsAppMessage = async (contact, jsonbody, channelNumber) => {
+  const whatsappApiUrl = `${process.env.WHATSAPP_API_URL}/api/v1.0/messages/send-template/${channelNumber}`;
 
   const headers = {
-    Authorization: `Bearer ${config.whatsapp.apiKey}`,
+    Authorization: `Bearer ${process.env.WHATSAPP_API_KEY}`,
     "Content-Type": "application/json",
   };
 
-  const body = JSON.stringify({
-    messaging_product: "whatsapp",
-    recipient_type: "individual",
-    to: to,
-    type: "text",
-    text: { body: message },
-  });
+  let body = jsonbody;
+  let phone = contact.replace("+", ""); // Remove non-numeric characters
+  body.to = phone;
+  body = JSON.stringify(body);
 
   try {
     const response = await fetch(whatsappApiUrl, {
@@ -29,7 +26,7 @@ const sendWhatsAppMessage = async (to, message) => {
     });
 
     const result = await response.json();
-    console.log("WhatsApp Message Sent:", result);
+    // console.log("WhatsApp Message Sent:", result);
   } catch (error) {
     console.error("Error sending WhatsApp message:", error);
   }
@@ -53,7 +50,7 @@ const getChannelsFromAPI = async () => {
   try {
     const response = await fetch(apiUrl, requestOptions);
     const result = await response.json(); // Parse JSON directly
-    console.log("Fetched Channels:", result);
+    // console.log("Fetched Channels:", result);
     return result || []; // Adjust according to the actual response format
   } catch (error) {
     console.error("Error fetching channels:", error);
@@ -78,7 +75,7 @@ const getChannelTemplates = async (channelNumber) => {
   try {
     const response = await fetch(apiUrl, requestOptions);
     const result = await response.json(); // Parse the response as JSON
-    console.log("Channel Templates:", result);
+
     return result; // Return the response for further use
   } catch (error) {
     console.error("Error fetching channel templates:", error);
@@ -129,7 +126,7 @@ const fetchTemplatePayload = async (templateName, channelNumber) => {
     // Check if the response is OK (status code 200)
     if (response.ok) {
       const result = await response.json(); // Parse JSON response
-      console.log(result); // Process the result (log for now)
+      // console.log(result); // Process the result (log for now)
       return result; // Return the result for further processing
     } else {
       throw new Error(`Error fetching template: ${response.statusText}`);

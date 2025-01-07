@@ -27,7 +27,7 @@ const fetchHubSpotContacts = async () => {
 
     const result = await response.json(); // Parse the response as JSON
 
-    console.log("Fetched HubSpot Contacts:", result.results);
+    // console.log("Fetched HubSpot Contacts:", result.results);
     return result.results || []; // Adjust to the actual response structure
   } catch (error) {
     console.error("Error fetching contacts from HubSpot:", error);

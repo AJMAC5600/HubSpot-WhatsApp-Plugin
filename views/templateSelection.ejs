@@ -40,8 +40,9 @@
 
         <!-- Contact Selection -->
         <label for="contact">Select Contact:</label>
-        <select id="contact" name="contact" required>
+        <select id="contact" name="contact" required multiple>
           <option value="" disabled selected>Select a contact</option>
+          <option value="true">Select All</option>
           <% contacts.forEach(contact => { %>
           <option value="<%= contact.properties.phone %>">
             <%= contact.properties.firstname %> ( <%= contact.properties.phone
@@ -51,19 +52,21 @@
         </select>
 
         <!-- Dynamic Template Configuration -->
-        <div class="section" id="header-section">
-          <h3>Header</h3>
-          <div id="header-inputs"></div>
-        </div>
+        <div class="dynamic-input">
+          <div class="section" id="header-section">
+            <h3>Header</h3>
+            <div id="header-inputs"></div>
+          </div>
 
-        <div class="section" id="body-section">
-          <h3>Body</h3>
-          <div id="body-inputs"></div>
-        </div>
+          <div class="section" id="body-section">
+            <h3>Body</h3>
+            <div id="body-inputs"></div>
+          </div>
 
-        <div class="section" id="button-section">
-          <h3>Button</h3>
-          <div id="button-content"></div>
+          <div class="section" id="button-section">
+            <h3>Button</h3>
+            <div id="button-content"></div>
+          </div>
         </div>
 
         <!-- Submit Button -->
@@ -74,6 +77,33 @@
     <script>
       // Store all templates fetched from the backend
       let templates = [];
+      let templateData = {};
+
+      $("#templateForm").submit(function (event) {
+        event.preventDefault(); // Prevent default form submission
+
+        // Get the updated JSON when submitting
+        const updatedJson = recreateJsonWithUpdatedValues(templateData);
+        // Log or submit the updated JSON
+
+        // Submit the form data via AJAX or other actions
+        // Example:
+        $.ajax({
+          url: "/submit-endpoint",
+          method: "POST",
+          data: {
+            updatedJsonbody: updatedJson,
+            contact: $("#contact").val(),
+            channel: $("#channel").val(),
+          },
+          success: function (response) {
+            alert("Data submitted successfully!");
+          },
+          error: function (error) {
+            console.error("Error during submission:", error);
+          },
+        });
+      });
 
       // Fetch templates when the channel is selected
       $("#channel").change(function () {
@@ -139,10 +169,12 @@
           data: { template: selectedTemplateName, channel: selectedChannel },
           success: function (response) {
             if (response.success) {
-              const templateData = response.templateData; // Full template data
+              templateData = response.template; // Full template data
 
               // Dynamically generate the inputs based on the full template data
               generateInputs(templateData);
+              // Update the template JSON with user input
+              // This will print the updated JSON to the console
             } else {
               alert("Failed to fetch template components.");
             }
@@ -155,6 +187,40 @@
       });
 
       // Function to generate inputs dynamically based on the full template data
+      function recreateJsonWithUpdatedValues(templateData) {
+        // Clone the original JSON to avoid mutating it directly
+        const updatedTemplateData = JSON.parse(JSON.stringify(templateData));
+
+        // Helper function to update parameters in a component
+        function updateComponentParams(componentType) {
+          const component = updatedTemplateData.template.components.find(
+            (c) => c.type === componentType
+          );
+          if (component) {
+            component.parameters.forEach((param, index) => {
+              const inputField = document.querySelector(
+                `input[name="${componentType}_${index}"]`
+              );
+              if (inputField) {
+                param.text = inputField.value; // Update with the new value from the input field
+              }
+            });
+          }
+        }
+
+        // Update header components
+        updateComponentParams("header");
+
+        // Update body components
+        updateComponentParams("body");
+
+        // Update button components
+        updateComponentParams("button");
+
+        // Return the updated JSON
+        return updatedTemplateData;
+      }
+
       function generateInputs(templateData) {
         // Clear previous inputs
         document.getElementById("header-inputs").innerHTML = "";
@@ -172,6 +238,8 @@
 
             const inputField = document.createElement("input");
             inputField.type = "text";
+            inputField.name = `header_${index}`;
+            inputField.value = param.text; // Pre-fill with the provided value
             inputField.placeholder = `Enter text for header (e.g., ${param.text})`;
 
             document.getElementById("header-inputs").appendChild(inputLabel);
@@ -190,6 +258,8 @@
 
             const inputField = document.createElement("input");
             inputField.type = "text";
+            inputField.name = `body_${index}`;
+            inputField.value = param.text; // Pre-fill with the provided value
             inputField.placeholder = `Enter text for body (e.g., ${param.text})`;
 
             document.getElementById("body-inputs").appendChild(inputLabel);
@@ -203,12 +273,17 @@
         );
         if (buttonComponent) {
           buttonComponent.parameters.forEach((param, index) => {
-            const buttonText = document.createElement("p");
-            buttonText.textContent = `Button Content ${index + 1}: ${
-              param.text
-            }`;
+            const inputLabel = document.createElement("label");
+            inputLabel.textContent = `Button Text ${index + 1}:`;
 
-            document.getElementById("button-content").appendChild(buttonText);
+            const inputField = document.createElement("input");
+            inputField.type = "text";
+            inputField.name = `button_${index}`;
+            inputField.value = param.text; // Pre-fill with the provided value
+            inputField.placeholder = `Enter text for button (e.g., ${param.text})`;
+
+            document.getElementById("button-content").appendChild(inputLabel);
+            document.getElementById("button-content").appendChild(inputField);
           });
         }
       }

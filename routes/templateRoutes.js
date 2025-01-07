@@ -1,5 +1,6 @@
 const express = require("express");
 const {
+  sendWhatsAppMessage,
   getChannelsFromAPI,
   getChannelTemplates,
   fetchTemplatePayload,
@@ -16,7 +17,7 @@ router.get("/templates", async (req, res) => {
     // Static data for categories and contacts
     const categories = ["MARKETING", "UTILITY", "AUTHENTICATION"];
     const contacts = await fetchHubSpotContacts(); // Fetch contacts from HubSpot
-    console.log(contacts);
+    // console.log(contacts);
 
     // Render the template selection page with empty templates initially
     res.render("templateSelection", {
@@ -41,6 +42,7 @@ const fetchTemplateFromRequest = async (req, res) => {
   try {
     // Fetch the template payload from the API
     const templateData = await fetchTemplatePayload(template, channel);
+    // console.log(templateData);
 
     // Return the template data to the frontend
     res.json({ success: true, template: templateData });
@@ -62,6 +64,7 @@ router.post("/save-channel", async (req, res) => {
   try {
     // Fetch templates for the selected channel
     const templates = await getChannelTemplates(channel);
+    // console.log(templates);
 
     // Send the templates back as a JSON response
     res.json({ success: true, templates });
@@ -74,14 +77,34 @@ router.post("/save-channel", async (req, res) => {
 });
 
 // Route to handle form submission (after selecting category, template, etc.)
-router.post("/templates/submit", (req, res) => {
-  const { category, channel, template, contact } = req.body;
-  console.log("Form submitted with data:", {
-    category,
-    channel,
-    template,
-    contact,
-  });
+router.post("/submit-endpoint", async (req, res) => {
+  const { updatedJsonbody, contact, channel } = req.body;
+  // console.log(contact);
+
+  // Fetch HubSpot contacts
+  const contacts = await fetchHubSpotContacts();
+  // console.log(contacts);
+
+  // Extract phone numbers from contacts (assuming `phone` is a property inside the `properties` object)
+  let phoneNumbers = contacts.map((contact) => contact.properties.phone);
+
+  // console.log(phoneNumbers);
+
+  // Check if we need to send the message to multiple contacts or a single one
+  if (contact === "true") {
+    // Send message to all phone numbers
+    phoneNumbers.forEach((phoneNumber) => {
+      sendWhatsAppMessage(phoneNumber, updatedJsonbody, channel);
+    });
+  } else if (Array.isArray(contact)) {
+    // Send message to all selected contacts
+    contact.forEach((contact) => {
+      sendWhatsAppMessage(contact, updatedJsonbody, channel);
+    });
+  } else {
+    // Send message to the selected contact
+    sendWhatsAppMessage(contact, updatedJsonbody, channel);
+  }
 
   // Handle the form submission (store, send, etc.)
   res.send("Form submitted successfully!");
