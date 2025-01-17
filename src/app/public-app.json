@@ -4,8 +4,12 @@
   "description": "An example to demonstrate how to build a public app with developer projects.",
   "allowedUrls": ["https://api.example.com"],
   "auth": {
-    "redirectUrls": ["http://localhost:3000/oauth-callback"],
-    "requiredScopes": ["crm.objects.contacts.read", "crm.objects.contacts.write"],
+    "redirectUrls": ["http://localhost:3000/oauth/callback"],
+    "requiredScopes": [
+      "crm.objects.contacts.read",
+      "crm.objects.contacts.write",
+      "oauth"
+    ],
     "optionalScopes": [],
     "conditionallyRequiredScopes": []
   },

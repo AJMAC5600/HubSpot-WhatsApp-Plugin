@@ -78,7 +78,10 @@
       // Store all templates fetched from the backend
       let templates = [];
       let templateData = {};
+      const dynamicinput = document.querySelector(".dynamic-input");
+      dynamicinput.style.display = "none"; // Initially hide dynamic input section
 
+      // Handle form submission
       $("#templateForm").submit(function (event) {
         event.preventDefault(); // Prevent default form submission
 
@@ -159,6 +162,7 @@
 
       // Fetch the template components after selecting the template
       $("#template").change(function () {
+        dynamicinput.style.display = "flex"; // Show dynamic input section
         const selectedTemplateName = $(this).val(); // Get selected template name
         const selectedChannel = $("#channel").val(); // Get selected channel
 
